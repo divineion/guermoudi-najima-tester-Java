@@ -168,5 +168,39 @@ public class FareCalculatorServiceTest {
 
         assertEquals(0.5 * Fare.CAR_RATE_PER_HOUR, ticket.getPrice(), "Test failed for exactly 30 minutes parking time");
     }
+
+    //ce test doit appeler la méthode calculateFare 
+    //avec un ticket concernant une voiture et avec le paramètre discount à true, 
+    //puis vérifier que le prix calculé est est bien de 95% du tarif plein. 
+    //La durée du ticket doit être de plus de 30 minutes.
+    @Test
+    public void calculateFareCarWithDiscount() {
+        Date inTime = new Date();
+        Date outTime = new Date();
+        inTime.setTime(System.currentTimeMillis() - (60 * 60 * 1000) );
+        ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.CAR, false);
+
+        ticket.setInTime(inTime);
+        ticket.setOutTime(outTime);
+        ticket.setParkingSpot(parkingSpot);
+        fareCalculatorService.calculateFare(ticket, true);
+
+        assertEquals(0.95 * Fare.CAR_RATE_PER_HOUR, ticket.getPrice());
+    }
+
+    @Test
+    public void calculateFareBikeWithDiscount() {
+        Date inTime = new Date();
+        Date outTime = new Date();
+        inTime.setTime(System.currentTimeMillis() - (60 * 60 * 1000) );
+        ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.BIKE, false);
+
+        ticket.setInTime(inTime);
+        ticket.setOutTime(outTime);
+        ticket.setParkingSpot(parkingSpot);
+        fareCalculatorService.calculateFare(ticket, true);
+
+        assertEquals(0.95 * Fare.BIKE_RATE_PER_HOUR, ticket.getPrice());
+    }
 }
 
