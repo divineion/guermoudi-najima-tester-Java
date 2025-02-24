@@ -9,7 +9,7 @@ import com.parkit.parkingsystem.model.Ticket;
  * and the type of the parking spot (car or bike).
  * 
  * 
- * <p>This service uses the timestamps from a {@Link Ticket} object to calculate 
+ * <p>This service uses the timestamps from a {@link Ticket} object to calculate 
  * the duration in hours. 
  * If the duration is less than 30 minutes, no fare is applied. 
  * Otherwise, the fare is calculated based on the duration and the type of vehicle. 
@@ -17,14 +17,16 @@ import com.parkit.parkingsystem.model.Ticket;
  * 
  * <p>The fare calculation takes into account the parking rates defined in the {@link Fare} class.</p>
  * 
- * @throws {@Link IllegalArgumentException} in case of invalid time or invalid parking
+ * <p>If the discount parameter is set to {@code true}, a 5% reduction is applied to the total fare.</p>
+ * 
+ * @throws {@link IllegalArgumentException} in case of invalid time or invalid parking
  * 
  * @see Ticket
  * @see Fare
  */
 public class FareCalculatorService {
 
-    public void calculateFare(Ticket ticket){
+    public void calculateFare(Ticket ticket, boolean discount){
 
         validateProvidedTime(ticket);
 
@@ -40,18 +42,30 @@ public class FareCalculatorService {
         if (duration < 0.5) {
             ticket.setPrice(0);
         } else {
+            double fare;
+
             switch (ticket.getParkingSpot().getParkingType()){
                 case CAR: {
-                    ticket.setPrice(duration * Fare.CAR_RATE_PER_HOUR);
+                    fare = duration * Fare.CAR_RATE_PER_HOUR;
                     break;
                 }
                 case BIKE: {
-                    ticket.setPrice(duration * Fare.BIKE_RATE_PER_HOUR);
+                    fare = duration * Fare.BIKE_RATE_PER_HOUR;
                     break;
                 }
                 default: throw new IllegalArgumentException("Unkown Parking Type");
             }
+            
+            if (discount) {
+                ticket.setPrice((fare * 0.95 * 100) / 100);
+            } else {
+               ticket.setPrice(fare);
+            }
         }
+    }
+
+    public void calculateFare(Ticket ticket) {
+        calculateFare(ticket, false);
     }
 
     private void validateProvidedTime(Ticket ticket) {
