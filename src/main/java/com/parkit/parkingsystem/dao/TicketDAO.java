@@ -32,8 +32,8 @@ public class TicketDAO {
             ps.setTimestamp(4, new Timestamp(ticket.getInTime().getTime()));
             ps.setTimestamp(5, (ticket.getOutTime() == null)?null: (new Timestamp(ticket.getOutTime().getTime())) );
             return ps.execute();
-        }catch (Exception ex){
-            logger.error("Error fetching next available slot",ex);
+        }catch (Exception e){
+            logger.error("Error fetching next available slot",e);
         }finally {
             dataBaseConfig.closeConnection(con);
             return false;
@@ -61,8 +61,8 @@ public class TicketDAO {
             }
             dataBaseConfig.closeResultSet(rs);
             dataBaseConfig.closePreparedStatement(ps);
-        }catch (Exception ex){
-            logger.error("Error fetching next available slot",ex);
+        }catch (Exception e){
+            logger.error("Error fetching next available slot", e);
         }finally {
             dataBaseConfig.closeConnection(con);
             return ticket;
@@ -79,11 +79,80 @@ public class TicketDAO {
             ps.setInt(3,ticket.getId());
             ps.execute();
             return true;
-        }catch (Exception ex){
-            logger.error("Error saving ticket info",ex);
+        }catch (Exception e){
+            logger.error("Error saving ticket info", e);
         }finally {
             dataBaseConfig.closeConnection(con);
         }
         return false;
+    }
+
+     /**
+     * This method verifies if the entering vehicle is not already in.  
+     * 
+     * @param vehicleRegNumber
+     * @return true if the entering vehicle has already an in-time without out-time, 
+     * false otherwise. 
+     */
+    public boolean isVehicleAlreadyInParking(String vehicleRegNumber) {
+
+        Connection con = null;
+        boolean isInParking = false;
+
+        try {
+            con = dataBaseConfig.getConnection();
+
+            PreparedStatement ps = con.prepareStatement(DBConstants.CHECK_VEHICLE_IN_WITHOUT_OUT);
+            ps.setString(1, vehicleRegNumber);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                logger.info("Entry attempt failure: the vehicle {} has never exited since the last entry", vehicleRegNumber);
+
+                isInParking = true;
+            }
+
+        } catch(Exception e) {
+            logger.error("An error occurred : ", e);
+        }
+        finally {
+            dataBaseConfig.closeConnection(con);    
+        }
+        return isInParking;
+    }
+
+
+    /**
+     * This method verifies how many times a vehicle has used the service in the last 30 days. 
+     * 
+     * @param vehicleRegNumber the registration number of the vehicle.
+     * @return the number of times the vehicle has used the service within the last 30 days. 
+     */
+    public int getNbTicket(String vehicleRegNumber) {
+        Connection con = null;
+        int count = 0;
+
+        try {
+            con = dataBaseConfig.getConnection();
+
+            PreparedStatement ps = con.prepareStatement(DBConstants.GET_NB_TICKETS);
+            ps.setString(1, vehicleRegNumber);
+            ps.setTimestamp(2, new Timestamp(System.currentTimeMillis() - (30L * 24 * 60 * 60 * 1000)));
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                count = rs.getInt(1);
+            }
+
+            dataBaseConfig.closeResultSet(rs);
+            dataBaseConfig.closePreparedStatement(ps);
+
+        } catch(Exception e) {
+            logger.error("Error fetching ticket count for vehicle {}", vehicleRegNumber, e);
+        } finally {
+            dataBaseConfig.closeConnection(con);
+        }
+
+        return count;
     }
 }
