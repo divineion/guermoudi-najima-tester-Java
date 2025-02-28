@@ -56,7 +56,7 @@ public class ParkingService {
 
                 int count = ticketDAO.getNbTicket(vehicleRegNumber);
                 if (count >= 4) {
-                    System.out.println("Heureux de vous revoir ! En tant qu'utilisateur régulier de notre parking, vous allez obtenir une remise de 5%");
+                    System.out.println("Welcome back! As a regular user of our parking, you will receive a 5% discount.");
                 }
 
                 parkingSpot.setAvailable(false);
