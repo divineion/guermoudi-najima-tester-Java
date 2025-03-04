@@ -1,5 +1,6 @@
 package com.parkit.parkingsystem.service;
 
+import com.parkit.parkingsystem.constants.Fare;
 import com.parkit.parkingsystem.constants.ParkingType;
 import com.parkit.parkingsystem.dao.ParkingSpotDAO;
 import com.parkit.parkingsystem.dao.TicketDAO;
@@ -54,11 +55,6 @@ public class ParkingService {
                     return;
                 }
 
-                int count = ticketDAO.getNbTicket(vehicleRegNumber);
-                if (count >= 4) {
-                    System.out.println("Welcome back! As a regular user of our parking, you will receive a 5% discount.");
-                }
-
                 parkingSpot.setAvailable(false);
                 parkingSpotDAO.updateParking(parkingSpot);//allot this parking space and mark it's availability as false
 
@@ -72,6 +68,12 @@ public class ParkingService {
                 ticket.setInTime(inTime);
                 ticket.setOutTime(null);
                 ticketDAO.saveTicket(ticket);
+
+                int count = ticketDAO.getNbTicket(vehicleRegNumber);
+                if (count >= Fare.MIN_USES_FOR_FREQUENT_USER) {
+                    System.out.println("Welcome back! As a regular user of our parking, you will receive a 5% discount.");
+                }
+
                 System.out.println("Generated Ticket and saved in DB");
                 System.out.println("Please park your vehicle in spot number:"+parkingSpot.getId());
                 System.out.println("Recorded in-time for vehicle number:"+vehicleRegNumber+" is:"+inTime);
@@ -157,7 +159,7 @@ public class ParkingService {
 
             int count = ticketDAO.getNbTicket(vehicleRegNumber);
 
-            fareCalculatorService.calculateFare(ticket, count >= 5);
+            fareCalculatorService.calculateFare(ticket, count >= Fare.MIN_USES_FOR_FREQUENT_USER);
            
             if(ticketDAO.updateTicket(ticket)) {
                 ParkingSpot parkingSpot = ticket.getParkingSpot();
@@ -166,8 +168,8 @@ public class ParkingService {
 
                 double displayedPrice = Math.round(ticket.getPrice() * 100) / 100.00;
 
-                if (count >= 5) {
-                    System.out.println("Merci pour votre fidélité !");
+                if (count >= Fare.MIN_USES_FOR_FREQUENT_USER) {
+                    System.out.println("Thank you for your loyalty !");
                 } 
 
                 System.out.println("Please pay the parking fare:" + displayedPrice + "\n");
