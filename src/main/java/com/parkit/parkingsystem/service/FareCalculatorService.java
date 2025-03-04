@@ -57,7 +57,7 @@ public class FareCalculatorService {
             }
             
             if (discount) {
-                ticket.setPrice((fare * 0.95 * 100) / 100);
+                ticket.setPrice((fare * Fare.FREQUENT_USER_REDUCTION_RATE * 100) / 100);
             } else {
                ticket.setPrice(fare);
             }
