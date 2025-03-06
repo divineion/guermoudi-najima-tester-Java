@@ -6,4 +6,5 @@ public class Fare {
 
     public static final double FREQUENT_USER_REDUCTION_RATE = 0.95;
     public static final int MIN_USES_FOR_FREQUENT_USER = 5;
+    public static final double FREE_PARKING_TIME = 0.5;
 }

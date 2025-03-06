@@ -166,11 +166,11 @@ public class ParkingService {
                 parkingSpot.setAvailable(true);
                 parkingSpotDAO.updateParking(parkingSpot);
 
-                double displayedPrice = Math.round(ticket.getPrice() * 100) / 100.00;
-
                 if (count >= Fare.MIN_USES_FOR_FREQUENT_USER) {
                     System.out.println("Thank you for your loyalty !");
-                } 
+                }
+
+                double displayedPrice = ticket.getPrice();
 
                 System.out.println("Please pay the parking fare:" + displayedPrice + "\n");
                 System.out.println("Recorded out-time for vehicle number:" + ticket.getVehicleRegNumber() + " is:" + outTime + "\n");
