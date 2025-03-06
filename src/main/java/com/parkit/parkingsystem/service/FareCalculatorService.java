@@ -3,6 +3,7 @@ package com.parkit.parkingsystem.service;
 import com.parkit.parkingsystem.constants.Fare;
 import com.parkit.parkingsystem.constants.ParkingType;
 import com.parkit.parkingsystem.model.Ticket;
+import com.parkit.parkingsystem.util.FormatUtil;
 
 /**
  * This class calculates the parking fare based on the in and out times 
@@ -37,10 +38,10 @@ public class FareCalculatorService {
         long inHour = ticket.getInTime().getTime();
         long outHour = ticket.getOutTime().getTime();
 
-        float duration = (outHour - inHour) / (60 * 60 * 1000f);
+        double duration = (outHour - inHour) / (60.0 * 60.0 * 1000.0);
 
-        if (duration < 0.5) {
-            ticket.setPrice(0);
+        if (duration < Fare.FREE_PARKING_TIME) {
+            ticket.setPrice(FormatUtil.roundToTwoDecimals(0));
         } else {
             double fare;
 
@@ -57,9 +58,9 @@ public class FareCalculatorService {
             }
             
             if (discount) {
-                ticket.setPrice((fare * Fare.FREQUENT_USER_REDUCTION_RATE * 100) / 100);
+                ticket.setPrice(FormatUtil.roundToTwoDecimals(fare * Fare.FREQUENT_USER_REDUCTION_RATE));
             } else {
-               ticket.setPrice(fare);
+               ticket.setPrice(FormatUtil.roundToTwoDecimals(fare));
             }
         }
     }
