@@ -143,14 +143,17 @@ public class ParkingDataBaseIT {
         Calendar inTime = Calendar.getInstance();
         Calendar outTime = Calendar.getInstance();
         inTime.add(Calendar.HOUR, -1);
-        int entry = 0;
+        int entry = 1;
         do {
             testDataInsertionService.insertTestTicket(VEHICLE_REG_NUMBER, inTime, outTime, 0);
             entry++;
         } while (entry < Fare.MIN_USES_FOR_FREQUENT_USER);
 
+        testDataInsertionService.insertTestTicket(VEHICLE_REG_NUMBER, inTime, null, 0);
+
         // ACT :
         parkingService.processExitingVehicle();
+        
         Ticket ticket = ticketDAO.getTicket("ABCDEF");
         double ticketPrice = ticket.getPrice();
         double expectedPrice = FormatUtil.roundToTwoDecimals(Fare.CAR_RATE_PER_HOUR) * (Fare.FREQUENT_USER_REDUCTION_RATE);
@@ -158,6 +161,6 @@ public class ParkingDataBaseIT {
         // ASSERT : verify that the fare is correctly calculated for a recurring user
         assertNotNull(ticket);
         assertTrue(ticket.getPrice() < Fare.CAR_RATE_PER_HOUR, "Discounted price should be less than regular price");
-        assertTrue(isSameRoundedValue(ticketPrice, expectedPrice), "Discounted price should be the regular price minus the discount");
+        assertTrue(isSameRoundedValue(ticketPrice, expectedPrice), "Discounted price should should match the expected price rounded to the first decimal place");
     }
 }
