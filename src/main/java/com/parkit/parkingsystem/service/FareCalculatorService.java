@@ -1,31 +1,102 @@
 package com.parkit.parkingsystem.service;
 
 import com.parkit.parkingsystem.constants.Fare;
+import com.parkit.parkingsystem.constants.ParkingType;
 import com.parkit.parkingsystem.model.Ticket;
+import com.parkit.parkingsystem.util.FormatUtil;
 
+/**
+ * This class calculates the parking fare based on the in and out times 
+ * and the type of the parking spot (car or bike).
+ * 
+ * 
+ * <p>This service uses the timestamps from a {@link Ticket} object to calculate 
+ * the duration in hours. 
+ * If the duration is less than 30 minutes, no fare is applied. 
+ * Otherwise, the fare is calculated based on the duration and the type of vehicle. 
+ * </p>
+ * 
+ * <p>The fare calculation takes into account the parking rates defined in the {@link Fare} class.</p>
+ * 
+ * <p>If the discount parameter is set to {@code true}, a 5% reduction is applied to the total fare.</p>
+ * 
+ * @throws {@link IllegalArgumentException} in case of invalid time or invalid parking
+ * 
+ * @see Ticket
+ * @see Fare
+ */
 public class FareCalculatorService {
 
-    public void calculateFare(Ticket ticket){
+    public void calculateFare(Ticket ticket, boolean discount){
+
+        validateProvidedTime(ticket);
+
+        validateParkingSpot(ticket);
+
+        validateParkingType(ticket);
+
+        long inHour = ticket.getInTime().getTimeInMillis();
+        long outHour = ticket.getOutTime().getTimeInMillis();
+
+        double duration = (outHour - inHour) / (60.0 * 60.0 * 1000.0);
+
+        if (duration < Fare.FREE_PARKING_TIME) {
+            ticket.setPrice(FormatUtil.roundToTwoDecimals(0));
+        } else {
+            double fare;
+
+            switch (ticket.getParkingSpot().getParkingType()){
+                case CAR: {
+                    fare = duration * Fare.CAR_RATE_PER_HOUR;
+                    break;
+                }
+                case BIKE: {
+                    fare = duration * Fare.BIKE_RATE_PER_HOUR;
+                    break;
+                }
+                default: throw new IllegalArgumentException("Unkown Parking Type");
+            }
+            
+            if (discount) {
+                ticket.setPrice(FormatUtil.roundToTwoDecimals(fare * Fare.FREQUENT_USER_REDUCTION_RATE));
+            } else {
+               ticket.setPrice(FormatUtil.roundToTwoDecimals(fare));
+            }
+        }
+    }
+
+    public void calculateFare(Ticket ticket) {
+        calculateFare(ticket, false);
+    }
+
+    private void validateProvidedTime(Ticket ticket) {
         if( (ticket.getOutTime() == null) || (ticket.getOutTime().before(ticket.getInTime())) ){
-            throw new IllegalArgumentException("Out time provided is incorrect:"+ticket.getOutTime().toString());
+            throw new IllegalArgumentException("Out time provided is incorrect: "+ticket.getOutTime().getTime());
+        }
+    }
+
+    private void validateParkingSpot(Ticket ticket) {
+        if (ticket.getParkingSpot() == null) {
+            throw new NullPointerException();
+        }
+    }
+
+    private void validateParkingType(Ticket ticket) {
+
+        if (ticket.getParkingSpot().getParkingType() == null) {
+            throw new NullPointerException("The parking type cannot be null");
         }
 
-        int inHour = ticket.getInTime().getHours();
-        int outHour = ticket.getOutTime().getHours();
-
-        //TODO: Some tests are failing here. Need to check if this logic is correct
-        int duration = outHour - inHour;
-
-        switch (ticket.getParkingSpot().getParkingType()){
-            case CAR: {
-                ticket.setPrice(duration * Fare.CAR_RATE_PER_HOUR);
+        boolean isValidParkingType = false;
+        for (ParkingType parkingType : ParkingType.values()) {
+            if (ticket.getParkingSpot().getParkingType() == parkingType) {
+                isValidParkingType = true;
                 break;
             }
-            case BIKE: {
-                ticket.setPrice(duration * Fare.BIKE_RATE_PER_HOUR);
-                break;
-            }
-            default: throw new IllegalArgumentException("Unkown Parking Type");
+        }
+    
+        if (!isValidParkingType) {
+            throw new IllegalArgumentException("Unknown Parking Type");
         }
     }
 }

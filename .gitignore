@@ -1,0 +1,9 @@
+#IDE configuration files
+.vscode/
+
+#output files
+target/
+
+# logs file
+logs/
+
