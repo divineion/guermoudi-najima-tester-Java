@@ -53,6 +53,7 @@ public class FormatUtilTest {
     @Test
     public void addTwoDecimalsForInteger() {
         double formattedNumber = FormatUtil.roundToTwoDecimals(123);
+        
         assertEquals(123.00, formattedNumber); 
     }
 }
