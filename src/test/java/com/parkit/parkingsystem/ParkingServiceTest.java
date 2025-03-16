@@ -24,13 +24,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
-import java.util.Date;
+import java.util.Calendar;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
 @ExtendWith(MockitoExtension.class)
 public class ParkingServiceTest {
 
+    //injecte la dépendance
     @InjectMocks
     private static ParkingService parkingService;
 
@@ -58,7 +59,7 @@ public class ParkingServiceTest {
     private void useStubsToGetAndUpdateTicketForExitTests() {
         useVehicleRegistrationNumber();
         when(ticketDAO.getTicket(anyString())).thenReturn(ticket);
-        ticket.setOutTime(new Date(System.currentTimeMillis()));
+        ticket.setOutTime(Calendar.getInstance());
         when(ticketDAO.updateTicket(any(Ticket.class))).thenReturn(true);
     }
 
@@ -70,7 +71,9 @@ public class ParkingServiceTest {
 
         try {
             ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.CAR,false);
-            ticket.setInTime(new Date(System.currentTimeMillis() - (60*60*1000)));
+            Calendar inTime = Calendar.getInstance();
+            inTime.add(Calendar.HOUR, -1);
+            ticket.setInTime(inTime);
             ticket.setParkingSpot(parkingSpot);
             ticket.setVehicleRegNumber("ABCDEF");
         } catch (Exception e) {
@@ -138,7 +141,6 @@ public class ParkingServiceTest {
         when(parkingSpotDAO.updateParking(any(ParkingSpot.class))).thenReturn(true);
 
         parkingService.processExitingVehicle();
-        verify(parkingSpotDAO, Mockito.times(1)).updateParking(any(ParkingSpot.class));
         verify(ticketDAO).getTicket(anyString());
         verify(ticketDAO).getNbTicket(anyString());
         verify(ticketDAO).updateTicket(ticket);

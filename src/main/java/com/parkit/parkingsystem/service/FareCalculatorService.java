@@ -35,8 +35,8 @@ public class FareCalculatorService {
 
         validateParkingType(ticket);
 
-        long inHour = ticket.getInTime().getTime();
-        long outHour = ticket.getOutTime().getTime();
+        long inHour = ticket.getInTime().getTimeInMillis();
+        long outHour = ticket.getOutTime().getTimeInMillis();
 
         double duration = (outHour - inHour) / (60.0 * 60.0 * 1000.0);
 
@@ -71,7 +71,7 @@ public class FareCalculatorService {
 
     private void validateProvidedTime(Ticket ticket) {
         if( (ticket.getOutTime() == null) || (ticket.getOutTime().before(ticket.getInTime())) ){
-            throw new IllegalArgumentException("Out time provided is incorrect: "+ticket.getOutTime().toString());
+            throw new IllegalArgumentException("Out time provided is incorrect: "+ticket.getOutTime().getTime());
         }
     }
 

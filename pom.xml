@@ -133,7 +133,7 @@
                     </execution>
                     <execution>
                         <id>jacoco-report</id>
-                        <phase>test</phase>
+                        <phase>verify</phase>
                         <goals>
                             <goal>report</goal>
                         </goals>
@@ -142,7 +142,6 @@
                 <configuration>
                     <excludes>
                         <exclude>com/parkit/parkingsystem/constants/**</exclude>
-                        <exclude>com/parkit/parkingsystem/util/**</exclude>
                         <exclude>com/parkit/parkingsystem/config/**</exclude>
                     </excludes>
                 </configuration>
