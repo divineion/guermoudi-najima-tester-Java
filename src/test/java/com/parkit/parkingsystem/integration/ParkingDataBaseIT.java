@@ -45,6 +45,8 @@ public class ParkingDataBaseIT {
     private static TicketDAO ticketDAO;
     private static DataBasePrepareService dataBasePrepareService;
     private static TestDataInsertionService testDataInsertionService;
+    private Calendar inTime = Calendar.getInstance();
+    private Calendar outTime = Calendar.getInstance();
     private static final String VEHICLE_REG_NUMBER = "ABCDEF";
 
     @Mock
@@ -53,8 +55,8 @@ public class ParkingDataBaseIT {
     @BeforeAll
     private static void setUp() throws Exception {
         parkingSpotDAO = new ParkingSpotDAO();
-        parkingSpotDAO.dataBaseConfig = dataBaseTestConfig;
         ticketDAO = new TicketDAO();
+        parkingSpotDAO.dataBaseConfig = dataBaseTestConfig;
         ticketDAO.dataBaseConfig = dataBaseTestConfig;
         dataBasePrepareService = new DataBasePrepareService();
         testDataInsertionService = new TestDataInsertionService();
@@ -89,24 +91,18 @@ public class ParkingDataBaseIT {
     // Ensure a ticket is created and the parking spot is marked as unavailable when a car is parked.
     @Test
     public void testParkingACar() {
-        // ARRANGE : 
-        // simulate parking a car 
         when(inputReaderUtil.readSelection()).thenReturn(1);
         ParkingSpotDAO spyParkingSpotDAO = spy(parkingSpotDAO);
         ParkingService parkingService = new ParkingService(inputReaderUtil, spyParkingSpotDAO, ticketDAO);
-
         int parkingSpotId = parkingSpotDAO.getNextAvailableSlot(ParkingType.CAR);
         ParkingSpot parkingSpot = new ParkingSpot(parkingSpotId, ParkingType.CAR, false);
 
-        // ACT : process incoming vehicle
         parkingService.processIncomingVehicle();
 
         Ticket ticket = ticketDAO.getTicket(VEHICLE_REG_NUMBER);
-
-        // ASSERT : verify that the ticket is created and the parking spot is marked as unavailable
         verify(spyParkingSpotDAO).updateParking(any(ParkingSpot.class));
-        assertEquals(false, parkingSpot.isAvailable(), "Parking spot should be marked as unavailable");
 
+        assertEquals(false, parkingSpot.isAvailable(), "Parking spot should be marked as unavailable");
         assertNotNull(ticket, "Ticket should exist in the database");
         assertEquals(0, ticket.getPrice(), "Initial price should be zero");
         assertNotNull(ticket.getInTime(), "In-time should be recorded");
@@ -116,19 +112,14 @@ public class ParkingDataBaseIT {
     // Verifies that the generated fare and exit time are correctly stored  in the database.
     @Test
     public void testParkingLotExit() {
-        // ARRANGE :
-        // simulate parking a car 1 hour ago
         ParkingService parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
-        Calendar inTime = Calendar.getInstance();
         inTime.add(Calendar.HOUR, -1);
         testDataInsertionService.insertTestTicket(VEHICLE_REG_NUMBER, inTime, null, 0);
 
-        // ACT : 
-        parkingService.processExitingVehicle();      
-        // get the ticket from the database
+        parkingService.processExitingVehicle();    
+        
         Ticket ticket = ticketDAO.getTicket("ABCDEF");
 
-        // ASSERT : verify that the fare and exit time are correctly stored in the database
         assertNotNull(ticket, "Ticket should exist in the database");
         assertNotNull(ticket.getOutTime().getTime(), "Exit time should be recorded");
         assertNotNull(ticket.getPrice(), "Ticket should have a price");
@@ -137,28 +128,24 @@ public class ParkingDataBaseIT {
     // The price should be the discount price for a recurring user.
     @Test
     public void testParkingLotExitRecurringUser() throws InterruptedException {
-        // ARRANGE :
-        // simulate parking the same car multiple times (recurring user), then add a new entry for processing the exit
         ParkingService parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
-        Calendar inTime = Calendar.getInstance();
-        Calendar outTime = Calendar.getInstance();
         inTime.add(Calendar.HOUR, -1);
         int entry = 1;
+        // simulate parking multiple times
         do {
             testDataInsertionService.insertTestTicket(VEHICLE_REG_NUMBER, inTime, outTime, 0);
             entry++;
         } while (entry < Fare.MIN_USES_FOR_FREQUENT_USER);
 
+        // final ticket for the vehicle to trigger the discount, only entry is recorded
         testDataInsertionService.insertTestTicket(VEHICLE_REG_NUMBER, inTime, null, 0);
 
-        // ACT :
         parkingService.processExitingVehicle();
         
         Ticket ticket = ticketDAO.getTicket("ABCDEF");
         double ticketPrice = ticket.getPrice();
         double expectedPrice = FormatUtil.roundToTwoDecimals(Fare.CAR_RATE_PER_HOUR) * (Fare.FREQUENT_USER_REDUCTION_RATE);
 
-        // ASSERT : verify that the fare is correctly calculated for a recurring user
         assertNotNull(ticket);
         assertTrue(ticket.getPrice() < Fare.CAR_RATE_PER_HOUR, "Discounted price should be less than regular price");
         assertTrue(isSameRoundedValue(ticketPrice, expectedPrice), "Discounted price should should match the expected price rounded to the first decimal place");
