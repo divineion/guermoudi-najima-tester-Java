@@ -50,7 +50,7 @@ public class ParkingDataBaseIT {
     private static final String VEHICLE_REG_NUMBER = "ABCDEF";
 
     @Mock
-    private static InputReaderUtil inputReaderUtil;
+    private InputReaderUtil inputReaderUtil;
 
     @BeforeAll
     private static void setUp() throws Exception {
@@ -114,6 +114,7 @@ public class ParkingDataBaseIT {
     public void testParkingLotExit() {
         ParkingService parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
         inTime.add(Calendar.HOUR, -1);
+        // simulate parking a car
         testDataInsertionService.insertTestTicket(VEHICLE_REG_NUMBER, inTime, null, 0);
 
         parkingService.processExitingVehicle();    
